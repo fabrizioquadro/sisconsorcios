@@ -1,0 +1,465 @@
+<?php
+	
+	//função que gera o arquivo de remessa
+	function geraRemessaSicredi($ltrid, $caminhoSalvarArquivo){
+	
+	$ltrid = [NumLote];
+	$lTrid = $ltrid;
+       
+    //função para preenchimento numerico
+    function preencheNumerico($var, $total){
+        while(strlen($var) < $total){
+            $var = '0'.$var;
+        }
+        return $var;
+    }
+    
+    //função para preenchimento alfanumerico
+    function preencheAlfa($var, $total){
+        if(strlen($var) > $total){
+            return substr($var,0,$total);
+        }
+        else{
+            while(strlen($var) < $total){
+                $var = $var.' ';
+            }
+            return $var;
+        }
+    }
+
+    //função para retirar caracters especiais da string
+    function retiraCaracteresEspecias($string){
+        // matriz de entrada
+        $what = array( 'ä','ã','à','á','â','ê','ë','è','é','ï','ì','í','ö','õ','ò','ó','ô','ü','ù','ú','û','À','Á','É','Ê','Í','Ó','Ô','Õ','Ú','ñ','Ñ','ç','Ç',' ','-','(',')',',',';',':','|','!','"','#','$','%','&','/','=','?','~','^','>','<','ª','º','Ã');
+
+        // matriz de saída
+        $by   = array( 'a','a','a','a','a','e','e','e','e','i','i','i','o','o','o','o','o','u','u','u','u','A','A','E','E','I','O','O','O','U','n','N','c','C',' ','-','(',')',',',';',':',' ',' ','"',' ',' ',' ',' ','/','=','?',' ',' ','>','<',' ',' ','A');
+
+        // devolver a string
+        return str_replace($what, $by, $string);
+    }
+
+    //função que transforma o numero do mes em o codigo para nomencatura do arquivo
+    function transformaMesCod($mes){
+        if($mes == '1' || $mes == '01'){
+            return '1';
+        }
+        elseif($mes == '2' || $mes == '02'){
+            return '2';
+        }
+        elseif($mes == '3' || $mes == '03'){
+            return '3';
+        }
+        elseif($mes == '4' || $mes == '04'){
+            return '4';
+        }
+        elseif($mes == '5' || $mes == '05'){
+            return '5';
+        }
+        elseif($mes == '6' || $mes == '06'){
+            return '6';
+        }
+        elseif($mes == '7' || $mes == '07'){
+            return '7';
+        }
+        elseif($mes == '8' || $mes == '08'){
+            return '8';
+        }
+        elseif($mes == '9' || $mes == '09'){
+            return '9';
+        }
+        elseif($mes == '10'){
+            return 'O';
+        }
+        elseif($mes == '11'){
+            return 'N';
+        }
+        elseif($mes == '12'){
+            return 'D';
+        }
+    }
+
+    // vamos buscar os dados do lote da remessa
+	sc_lookup(LoteRM, "select ltid, dataproc from lote WHERE ltid = '$ltrid'");
+	if ({LoteRM} === false)
+	{
+	echo "Erro de acesso. Mensagem = " . {LoteRM_erro};
+	}
+	elseif (empty({LoteRM}))
+	{
+	echo "Comando select não retornou dados";
+	}
+	else
+	{
+	$lTrid 			= {LoteRM[0][0]};
+	$DataProcLote 	= {LoteRM[0][1]};
+	}
+    
+    // vamos buscar os dados do emitente
+	sc_lookup(Emitente, "select cnpj, razao_social from emitente WHERE REGISTRO = [id_emitente]");
+	if ({Emitente} === false)
+	{
+	echo "Erro de acesso. Mensagem = " . {Emitente_erro};
+	}
+	elseif (empty({Emitente}))
+	{
+	echo "Comando select não retornou dados ";
+	}
+	else
+	{
+	$CNPJEmitente 	= {Emitente[0][0]};
+	$Razao 			= {Emitente[0][1]};
+	}
+	
+    
+    // vamos buscar os dados bancarios
+	sc_lookup(DadosBanco, "select agencia, conta, digito_conta, digito_agencia, numero_banco, aceite, juros, cobrarmultaapos, carteira, seqremessa, id_banco from dados_bancarios WHERE id_emitente = [id_emitente] AND numero_banco = '748'");
+	if ({DadosBanco} === false)
+	{
+	echo "Erro de acesso. Mensagem = " . {DadosBanco_erro};
+	}
+	elseif (empty({DadosBanco}))
+	{
+	echo "Comando select não retornou dados ";
+	}
+	else
+	{
+	$Agencia 		= {DadosBanco[0][0]};
+	$Conta 			= {DadosBanco[0][1]};
+	$DigitoConta 	= {DadosBanco[0][2]};
+	$DigitoAgencia 	= {DadosBanco[0][3]};
+	$NumeroBanco 	= {DadosBanco[0][4]};
+	$Aceite 		= {DadosBanco[0][5]};
+	$Juros 			= {DadosBanco[0][6]};
+	$CobrarMulta 	= {DadosBanco[0][7]};
+	$Carteira 		= {DadosBanco[0][8]};
+	$SequenciaReme	= {DadosBanco[0][9]};
+	$idBanco		= {DadosBanco[0][10]};
+	}
+	
+	sc_select(pegaBoletos, "SELECT boletos.id_boleto, boletos.situacao, DATE_FORMAT(boletos.data_lancamento, '%d%m%Y'), boletos.data_vencimento, boletos.id_associado, boletos.dados_bancarios_id_banco, boletos.id_msgpadrao, boletos.nosso_numero, boletos.descricao, boletos.anomesref, boletos.loteid, boletos.linha1, boletos.linha2, boletos.linha3, boletos.linha4, boletos.linha5, boletos.linha6, boletos.linha7, boletos.loterem_ltrid, boletos.local_pag, boletos.tp_boleto, REPLACE(boletos.valor,'.', ''), 
+	associados.nome, 
+	TRIM(LEFT(CONCAT(associados.endereco, "",   associados.numero),40)), 
+	associados.numero, 
+	associados.complemento, 
+	associados.cep, 
+	associados.cidade, 
+	associados.estado, 
+	associados.cpf 
+	FROM boletos LEFT JOIN associados ON (boletos.id_associado = associados.id_assoc) 
+    WHERE boletos.loteid = '$ltrid'");
+	if ( {pegaBoletos} === false ) 
+	{
+	echo "Erro de acesso. Mensagem = " . {pegaBoletos_erro};
+	}
+	else
+	{		
+	
+
+	//INICIO DA MONTAGEM DO HEADER DO ARQUIVO ---------------------
+
+    //vamos montar o header do arquivo
+    $banco = '748'; 
+    $controleLote = '0000'; 
+    $controleRegistro = '0';
+    $cnab = '         ';
+    $tpPessoa = '2'; 
+    $cnpj = $CNPJEmitente;
+    $cnpj = str_replace('.','', $cnpj);
+    $cnpj = str_replace('-','', $cnpj);
+    $cnpj = str_replace('/','', $cnpj);
+
+    //vamos analisar se o cnpj possui a quantidade certa de caracters
+    if(strlen($cnpj) != 14){
+        echo "Cnpj não confere com os dados que o banco aceita";
+        exit();
+    }
+
+    $convenio = "                    ";
+    $nrAgencia = preencheNumerico($Agencia, 5);
+    $dvAgencia = ' ';
+    $nrConta = preencheNumerico($Conta, 12);
+    $dvConta = $DigitoConta;
+    $dv = ' ';
+    $nmEmpresa = preencheAlfa(retiraCaracteresEspecias($Razao), 30);
+    $nmBanco = "SICREDI                       ";
+    
+    $var = explode(' ', $DataProcLote);
+    $data = explode('-', $var[0]);
+    $hora = $var[1];
+    $data = $data[2].$data[1].$data[0];
+    $hora = str_replace(':', '', $hora);
+    //$seqRemessa = preencheAlfa($lTrid, 6);
+	
+	if($SequenciaReme == 0)
+		{
+		$SequenciaReme = 1;
+		}
+	else
+		{
+		$SequenciaReme += 1;
+		}
+		
+	$seqRemessa = preencheNumerico($SequenciaReme, 6);	
+	sc_exec_sql("UPDATE dados_bancarios SET seqremessa = '$SequenciaReme' WHERE id_banco = '$idBanco'");	
+		
+    $layout = '081';
+    $densidade = '01600';
+    $fimHeaderArq = "                                                                     ";
+
+    //variavel que contem o header do arquivo
+    $headerArquivo = $banco.$controleLote.$controleRegistro.$cnab.$tpPessoa.$cnpj.$convenio.$nrAgencia.$dvAgencia.$nrConta.$dvConta.$dv.$nmEmpresa.$nmBanco.'          1'.$data.$hora.$seqRemessa.$layout.$densidade.$fimHeaderArq."\n";
+
+    //FIM DA MONTAGEM DO HEADER DO ARQUIVO ---------------------
+
+    //INICIO DA MONTAGEM DO HEADER DO LOTE ---------------------
+    $controleSeqRemessa = preencheNumerico($seqRemessa, 8);
+
+    //variavel que contem o header do lote
+    $headerLote = "74800011R01  040 ".$tpPessoa.'0'.$cnpj.'                    '.$nrAgencia.$dvAgencia.$nrConta.$dvConta.' '.$nmEmpresa.'                                                                                '.$controleSeqRemessa.$data."00000000                                 \n";
+
+    //FIM DA MONTAGEM DO HEADER DO LOTE ---------------------
+
+
+    //INICIO DA MONTAGEM DO CONTEUDO (BOLETOS) ---------------------
+    $conteudo = "";
+
+    $i = 0;
+	
+   //foreach($boletos as $boleto){		
+	while (!{pegaBoletos}->EOF ) 
+	{
+
+	$id_boleto 			=   {pegaBoletos}->fields[0];
+	$situacao			=   {pegaBoletos}->fields[1];
+	$data_lancamento	=   {pegaBoletos}->fields[2];
+	$data_vencimentoDB	=   {pegaBoletos}->fields[3];
+	$id_associado		=   {pegaBoletos}->fields[4];
+	$dados_bancarios_id_banco	=   {pegaBoletos}->fields[5];
+	$id_msgpadrao		=   {pegaBoletos}->fields[6];
+	$nosso_numero		=   {pegaBoletos}->fields[7];
+	$descricao			=   {pegaBoletos}->fields[8];
+	$anomesref			=   {pegaBoletos}->fields[9];
+	$loteid				=   {pegaBoletos}->fields[10];
+	$linha1			=   {pegaBoletos}->fields[11];
+	$linha2			=   {pegaBoletos}->fields[12];
+	$linha3			=   {pegaBoletos}->fields[13];
+	$linha4			=   {pegaBoletos}->fields[14];
+	$linha5			=   {pegaBoletos}->fields[15];
+	$linha6			=   {pegaBoletos}->fields[16];
+	$linha7			=   {pegaBoletos}->fields[17];
+	$loterem_ltrid	=   {pegaBoletos}->fields[18];
+	$local_pag		=   {pegaBoletos}->fields[19];
+	$tp_boleto		=   {pegaBoletos}->fields[20];
+	$valor1			=   {pegaBoletos}->fields[21];
+	$nomeAssociado	=   {pegaBoletos}->fields[22];
+	$enderecoAssociado	=   {pegaBoletos}->fields[23];
+	$numeroAssociado	=   {pegaBoletos}->fields[24];
+	$complementoAssociado	=   {pegaBoletos}->fields[25];
+	$cepAssociado		=   {pegaBoletos}->fields[26];
+	$cidadeAssociado	=   {pegaBoletos}->fields[27];
+	$estadoAssociado	=   {pegaBoletos}->fields[28];
+	$cpfAssociado		=   {pegaBoletos}->fields[29];
+		
+		
+        $i++;
+        $seqConteudo = preencheNumerico($i,5);
+		
+		//vamos gerar o nosso numero para o boleto e salvar na tabela do boleto
+        $byteNossoNumero = '2';
+        $sequenciaNossoNumero = $id_boleto;
+        $sequenciaNossoNumero = preencheNumerico($sequenciaNossoNumero, 5);
+		$nossoNumeroP = $data[6].$data[7].$byteNossoNumero.$sequenciaNossoNumero;
+
+        $codModulo11 = $Agencia.$DigitoAgencia.$Carteira.$data[6].$data[7].$byteNossoNumero.$sequenciaNossoNumero;
+		
+		// Calcula modulo 11
+		$muultiplicador = "4329876543298765432";
+
+        $soma = 0;
+        for($is=0 ; $is<19 ; $is++){
+			$soma += (int)$codModulo11[$is] * (int)$muultiplicador[$is];
+        }
+
+        $resto = $soma % 11;
+        $dv = 11 - $resto;
+
+        if($dv == 10 || $dv == 11){
+            $dv = '0';
+        }
+
+		//echo "SOMA ".$soma;
+		// Fim fo calculo modulo 11
+		
+		//$dvNossoNumero = calculaModulo11($codModulo11);
+		$dvNossoNumero = $dv;
+
+        $nossoNumeroP .= $dvNossoNumero;
+		$nossoNumeroP = preencheNumerico($nossoNumeroP, 9);
+
+        sc_exec_sql("UPDATE boletos SET nosso_numero = '$nossoNumeroP' WHERE id_boleto = '$id_boleto'");
+		
+        $seuNumero = $id_boleto;
+        $seuNumero = preencheNumerico($seuNumero, 10);
+
+       	$dtVencimento = explode('-', $data_vencimentoDB);
+        $dtVencimento = $dtVencimento[2].$dtVencimento[1].$dtVencimento[0];
+		
+        //$valor = $valor * 100;
+        
+		$vrBoleto = str_pad($valor1,15,"0",STR_PAD_LEFT);
+	
+        /*
+		$dtEmissaoDB = explode(' ', $data_lancamento);
+		print_r($dtEmissaoDB);
+        $var = $dtEmissaoDB[0];
+		$var1 = explode('-', $var);
+        echo "Emissao ".$dtEmissaoDB = $var[2].$var[1].$var[0];
+		*/
+
+        $aceite = $Aceite;
+        $aceite = preencheAlfa($aceite, 1);
+
+        $juros = $Juros * 100;
+        $juros = preencheNumerico($juros, 15);
+
+        $tpJuros = '2';
+        $dtJuros = date('Y-m-d', strtotime("+ $CobrarMulta day", strtotime($data_vencimentoDB)));
+        $dataJuros = explode('-', $dtJuros);
+        $dtJuros = $dataJuros[2].$dataJuros[1].$dataJuros[0];
+
+        $identiNaEmpresa = preencheNumerico($id_boleto, 25);
+
+        $protestarNegativar = '3';
+        $diasProtestarNegativar = '00';
+
+        $segP = "74800013".$seqConteudo.'P 01'.$nrAgencia.$dvAgencia.$nrConta.$dvConta.' '.$nossoNumeroP.'0000000000011122'.$seuNumero.'00000'.$dtVencimento.$vrBoleto."00000 03".$aceite."".$data_lancamento.$tpJuros.$dtJuros.$juros.'000000000000000000000000000000000000000000000000000000                         '.$protestarNegativar.$diasProtestarNegativar."1000090000000000 \n";
+		
+
+        $i++;
+        $seqConteudo = preencheNumerico($i,5);
+
+        $tpPessoa = '1';
+        $cpf = $cpfAssociado;
+        $cpf = str_replace('.','', $cpf);
+        $cpf = str_replace('-','', $cpf);
+
+        $cpf = preencheNumerico($cpf, 15);
+        $nmAssociado = preencheAlfa(retiraCaracteresEspecias($nomeAssociado), 40);
+		
+		$enderecoA = preencheAlfa(retiraCaracteresEspecias($enderecoAssociado), 40);
+        //$enderecoA = retiraCaracteresEspecias($enderecoAssociado);
+        //$numero  = retiraCaracteresEspecias($numeroAssociado);
+        $complemento  = retiraCaracteresEspecias($complementoAssociado);
+        $cep = $cepAssociado;
+        $cep = str_replace('.','', $cep);
+        $cep = str_replace('-','', $cep);
+
+        $cidade = preencheAlfa(retiraCaracteresEspecias($cidadeAssociado), 15);
+        $estado = preencheAlfa(retiraCaracteresEspecias($estadoAssociado), 2);
+		
+		$segQ = "74800013".$seqConteudo.'Q 01'.$tpPessoa.$cpf.$nmAssociado.$enderecoA."               ".$cep.$cidade.$estado."0                                                       000                            \n";
+		
+        $conteudo .= $segP.$segQ;
+    	//echo "<br/> CONTEUDO ". $conteudo;
+	
+		
+	{pegaBoletos}->MoveNext();
+	}
+	{pegaBoletos}->Close();
+	}	
+		
+	//} // FIM FOR EACH
+
+		//echo "<br/> fora CONTEUDO ". $conteudo;
+		
+		
+    $qtRegistro = $i + 2;
+    $qtRegArq = $qtRegistro + 2;
+    $qtRegistro = preencheNumerico($qtRegistro, 6);
+    $qtRegArq = preencheNumerico($qtRegArq, 6);
+
+    $traillerLote = "74800015         ".$qtRegistro."00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000                                                                                                                             \n";
+    $traillerArquivo = "74899999         000001".$qtRegArq."000000                                                                                                                                                                                                             \n";
+    
+    $codBeneficiario = $Carteira;
+
+    $dtEmissao = explode(' ', $DataProcLote);
+    $dtEmissao = $dtEmissao[0];
+    $dtVar = $dtEmissao; // reserva variavel para gerar o nome do arquivo
+    $dtEmissao = explode('-', $dtEmissao);
+
+    $codMes = $dtEmissao[1];
+    $codMes = transformaMesCod($codMes);
+	$codDia = $dtEmissao[2];
+
+    //vamos selecionar o ultimo arquivo de remessa desse dia
+    $dtHrInc = $dtVar." 00:00:00";
+    $dtHrFn = $dtVar." 23:59:59";
+		
+	sc_lookup(contaLote, "SELECT COUNT(ltrid) FROM loterem WHERE id_emitente = [id_emitente] AND dataproc >= '$dtHrInc' AND dataproc <= '$dtHrFn' ORDER BY dataproc DESC");
+	if ({contaLote} === false)
+	{
+	echo "Erro de acesso. Mensagem = " . {contaLote_erro};
+	}
+	elseif (empty({contaLote}))
+	{
+	echo "Comando select não retornou dados ";
+	}
+	else
+	{
+	$ContaLote 	= {contaLote[0][0]};
+	}
+	
+	$contador = 0;
+	if($ContaLote == 0){
+    $contador = '001';
+    }
+    else
+	{
+	$contador = $ContaLote + 1;
+    }
+
+    //$extensao = preencheNumerico($contador,3);
+	$extensao = "REM";
+	$pontoExt = ".";
+
+	$caminhoSalvarArquivo = '"\"';
+    $nmArquivo = $codBeneficiario.$codMes.$codDia.$pontoExt.$extensao;
+    $caminhoArquivo = $caminhoSalvarArquivo.$codBeneficiario.$codMes.$extensao;
+
+	//echo $headerArquivo;
+    //echo $headerLote;
+    //echo $conteudo;
+    //echo $traillerLote;
+    //echo $traillerArquivo;
+	
+$pastaremessa = '/remessa/';
+$filename = $_SERVER['DOCUMENT_ROOT'].$pastaremessa.$nmArquivo;
+//$filename = $nmArquivo;
+		
+	$arquivo = fopen($filename,'w+'); 
+    if ($arquivo == false){
+        echo 'Não foi possível criar o arquivo de remessa.';
+        exit();
+    }
+
+    fwrite($arquivo,$headerArquivo);
+    fwrite($arquivo,$headerLote);
+    fwrite($arquivo,$conteudo);
+    fwrite($arquivo,$traillerLote);
+    fwrite($arquivo,$traillerArquivo);
+    fclose($arquivo);
+
+	//sc_exec_sql("UPDATE loterem SET arquivo = '$nmArquivo', link_arq = '$caminhoArquivo' WHERE ltrid = '$ltrid'");
+	
+	// Fim do SC_Select para gerar os boletos	
+	//{pegaBoletos}->MoveNext();
+	//}
+	//{pegaBoletos}->Close();
+	//}	
+	
+	sc_exec_sql("INSERT INTO loterem (dataproc, arquivo, link_arq, id_emitente) VALUES (now(), '$nmArquivo', '$caminhoArquivo', '[id_emitente]')");
+		
+	}
+?>

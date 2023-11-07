@@ -21,7 +21,7 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-floating form-floating-outline">
-                    <input required class="form-control" type="text" id="email" name="email" placeholder="john.doe@example.com" value='{{ $usuario->email }}' />
+                    <input required class="form-control" type="email" id="email" name="email" placeholder="john.doe@example.com" value='{{ $usuario->email }}' />
                     <label for="email">E-mail:</label>
                   </div>
                 </div>
@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-floating form-floating-outline">
-                    <input class="form-control" type="file" id="imagem" name="imagem"/>
+                    <input class="form-control" accept="image/png, image/jpeg, image/jpg" type="file" id="imagem" name="imagem"/>
                   </div>
                 </div>
               </div>

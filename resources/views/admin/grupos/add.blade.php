@@ -26,7 +26,7 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-floating form-floating-outline">
-                    <input required class="form-control" type="number" id="nrPrazo" name="nrPrazo" placeholder="Prazo do Consórcio" />
+                    <input required class="form-control" type="number" min="1" id="nrPrazo" name="nrPrazo" placeholder="Prazo do Consórcio" />
                     <label for="nrPrazo">Prazo do Consórcio:</label>
                   </div>
                 </div>
@@ -66,4 +66,17 @@
         </div>
     </div>
 </div>
+<script type="text/javascript">
+document.getElementById('txAdmin').addEventListener('blur', (e)=>{
+    valor = e.target.value;
+    valor = valor.replace(',','.');
+
+    if(isNaN(valor)){
+        alert('Taxa inválida');
+        document.getElementById('txAdmin').value = "";
+        document.getElementById('txAdmin').focus();
+    }
+
+})
+</script>
 @endsection

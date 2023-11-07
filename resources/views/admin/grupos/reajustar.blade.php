@@ -108,4 +108,17 @@
         </div>
     </div>
 </div>
+<script>
+document.getElementById('txReajuste').addEventListener('blur', (e)=>{
+    valor = e.target.value;
+    valor = valor.replace(',','.');
+
+    if(isNaN(valor)){
+        alert('Taxa inválida');
+        document.getElementById('txReajuste').value = "";
+        document.getElementById('txReajuste').focus();
+    }
+
+})
+</script>
 @endsection

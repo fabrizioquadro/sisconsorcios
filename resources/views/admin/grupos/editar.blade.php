@@ -33,7 +33,7 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-floating form-floating-outline">
-                    <input required class="form-control" type="number" id="nrPrazo" name="nrPrazo" placeholder="Prazo do Consórcio" value="{{ $grupo->nrPrazo }}"/>
+                    <input required class="form-control" min="1" type="number" id="nrPrazo" name="nrPrazo" placeholder="Prazo do Consórcio" value="{{ $grupo->nrPrazo }}"/>
                     <label for="nrPrazo">Prazo do Consórcio:</label>
                   </div>
                 </div>
@@ -73,4 +73,17 @@
         </div>
     </div>
 </div>
+<script>
+document.getElementById('txAdmin').addEventListener('blur', (e)=>{
+    valor = e.target.value;
+    valor = valor.replace(',','.');
+
+    if(isNaN(valor)){
+        alert('Taxa inválida');
+        document.getElementById('txAdmin').value = "";
+        document.getElementById('txAdmin').focus();
+    }
+
+})
+</script>
 @endsection

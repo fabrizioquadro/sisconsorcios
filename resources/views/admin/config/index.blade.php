@@ -35,7 +35,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-floating form-floating-outline">
-                                    <input class="form-control" type="file" id="logo" name="logo" placeholder="Logo"/>
+                                    <input class="form-control" type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/jpg" placeholder="Logo"/>
                                     <label for="logo">Logo:</label>
                                 </div>
                             </div>

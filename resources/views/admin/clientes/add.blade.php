@@ -102,13 +102,13 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-floating form-floating-outline">
-                    <input required class="form-control" type="text" id="dsUf" name="dsUf" placeholder="UF" />
+                    <input required maxlength="2" class="form-control" type="text" id="dsUf" name="dsUf" placeholder="UF" />
                     <label for="dsUf">UF:</label>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-floating form-floating-outline">
-                    <input class="form-control" type="file" id="imagem" name="imagem"/>
+                    <input class="form-control" type="file" accept="image/png, image/jpeg, image/jpg" id="imagem" name="imagem"/>
                     <label for="imagem">Foto do Cliente:</label>
                   </div>
                 </div>
@@ -129,21 +129,53 @@
 
 <script>
 document.getElementById('nrCep').addEventListener('blur', (e)=>{
-    if(e.target.value != ""){
-        $.getJSON(
-            "https://viacep.com.br/ws/" + e.target.value + "/json/",
-            {},
-            function(json){
-                if(json.erro != true){
-                    document.getElementById('dsEndereco').value = json.logradouro;
-                    document.getElementById('dsComplemento').value = json.complemento;
-                    document.getElementById('dsBairro').value = json.bairro;
-                    document.getElementById('nmCidade').value = json.localidade;
-                    document.getElementById('dsUf').value = json.uf;
-                    document.getElementById('nrEndereco').focus();
+    if(!isNaN(e.target.value)){
+        if(e.target.value != ""){
+            $.getJSON(
+                "https://viacep.com.br/ws/" + e.target.value + "/json/",
+                {},
+                function(json){
+                    if(json.erro != true){
+                        document.getElementById('dsEndereco').value = json.logradouro;
+                        document.getElementById('dsComplemento').value = json.complemento;
+                        document.getElementById('dsBairro').value = json.bairro;
+                        document.getElementById('nmCidade').value = json.localidade;
+                        document.getElementById('dsUf').value = json.uf;
+                        document.getElementById('nrEndereco').focus();
+                    }
                 }
+            );
+        }
+    }
+    else{
+        alert('CEP somente pode conter numeros');
+        document.getElementById('nrCep').value = "";
+        document.getElementById('nrCep').focus();
+    }
+})
+
+document.getElementById('nrCpf').addEventListener('blur', (elem)=>{
+    if(elem.target.value != ""){
+        //vamos ver se é um cpf valido
+        cpf = elem.target.value;
+        if(cpf[3] != '.' || cpf[7] != '.' || cpf[11] != '-'){
+            alert('É necessário o cpf estar na formatação XXX.XXX.XXX-XX');
+            document.getElementById('nrCpf').value = "";
+            document.getElementById('nrCpf').focus();
+        }
+        else{
+            cpf = cpf.replaceAll('.','');
+            cpf = cpf.replace('-','');
+
+            if(TestaCPF(cpf)){
+                console.log('ok')
             }
-        );
+            else{
+                alert('Cpf Inválido');
+                document.getElementById('nrCpf').value = '';
+                document.getElementById('nrCpf').focus();
+            }
+        }
     }
 })
 </script>
